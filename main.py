@@ -1,5 +1,14 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import cgi
+import json
+from uuid import uuid4 as uuid
+
+from redis import StrictRedis
+import boto3
+
+# AWS Setup
+queue = StrictRedis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com:6379", port=6379)
+s3 = boto3.client('s3', aws_access_key_id="ASIA4J7IJDVSUBOUNCFD" , aws_secret_access_key="bjhdtTublHKRiJNTyIgTLGoMeQa5LbOjK4KK8RsB")
 
 def save_blob_as_wav(blob, filename):
     with open(filename, 'wb') as wav_file:
@@ -27,17 +36,33 @@ class handler(BaseHTTPRequestHandler):
         form = cgi.FieldStorage(
             fp=self.rfile, headers=self.headers, environ={"REQUEST_METHOD": "POST"}
         )
+        task_id = uuid()
         content = form.getvalue("content")
         audio = form.getvalue("audio")
-        print(content, audio)
         
-        save_blob_as_wav(audio, "input.wav")
+        if not content or not audio:
+            # Bad requrest
+            self.send_response(400)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            message = "Bad Request"
+            self.wfile.write(bytes(message, "utf8"))
+            return
+        
+        s3.upload_fileobj(audio, "ai-presenter", f"tasks/{task_id}.wav")
+        
+        data = {
+            "id": task_id,
+            "text": content
+        }
+        message = json.dumps(data)
+        queue.rpush("tasks", message.encode("utf-8"))
 
+        # Sending response
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-
-        message = "Hello, World! Here is a POST response"
+        message = "success"
         self.wfile.write(bytes(message, "utf8"))
 
 
