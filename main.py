@@ -4,11 +4,11 @@ import json
 from uuid import uuid4 as uuid
 from io import BytesIO
 
-from redis import StrictRedis
+from redis import Redis
 import boto3
 
 # AWS Setup
-queue = StrictRedis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com", port=6379, decode_responses=True)
+queue = Redis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com", port=6379, decode_responses=True)
 session = boto3.Session(region_name="us-east-1")
 s3 = session.client("s3")
 
@@ -51,22 +51,39 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(bytes(message, "utf8"))
             return
         
-        fileobj = BytesIO(audio)
-        s3.upload_fileobj(fileobj, "ai-presenter", f"tasks/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
+        try:
+            fileobj = BytesIO(audio)
+            s3.upload_fileobj(fileobj, "ai-presenter", f"tasks/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
+        except Exception as error:
+            print(error)
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            message = "File Storage Error"
+            self.wfile.write(bytes(message, "utf8"))
+            return
         
-        data = {
-            "id": task_id,
-            "text": content
-        }
-        message = json.dumps(data)
-        queue.rpush("tasks", message.encode("utf-8"))
+        try:
+            data = {
+                "id": task_id,
+                "text": content
+            }
+            message = json.dumps(data)
+            queue.rpush("tasks", message.encode("utf-8"))
 
-        # Sending response
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-        message = "success"
-        self.wfile.write(bytes(message, "utf8"))
+            # Sending success response
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            message = "success"
+            self.wfile.write(bytes(message, "utf8"))
+        except Exception as error:
+            print(error)
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            message = "Queue Error"
+            self.wfile.write(bytes(message, "utf8"))
 
 PORT = 8080
 with HTTPServer(("", PORT), handler) as server:
