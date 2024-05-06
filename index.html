@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Presenter</title>
+    <style type="text/css">
+      form {
+        width: 80%;
+        margin: auto;
+        margin: auto;
+        padding: 1rem;
+        border: 1px solid gray;
+        display: flex;
+        flex-direction: column;
+      }
+      textarea {
+        resize: vertical;
+        width: 100%;
+      }
+      button {
+        background-color: chartreuse;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        font-weight: bold;
+      }
+      button:hover {
+        background-color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="mainForm">
+      <h1>AI Present With Your Voice</h1>
+      <strong>!!All outputs are publicly available!!</strong>
+      <div>
+        <div>Record your voice:</div>
+        <input type="button" id="start" value="Start" />
+        <input type="button" id="stop" value="Stop" disabled />
+      </div>
+      <div>
+        <div>Your Record:</div>
+        <audio id="audio" controls></audio>
+      </div>
+      <div>
+        <div>Present Content</div>
+        <textarea id="textarea" name="content" rows="10"></textarea>
+      </div>
+      <button type="submit">Generate</button>
+    </form>
+  </body>
+  <script src="https://unpkg.com/synth-js/dst/synth.min.js"></script>
+  <script>
+    var inputAudio;
+    function handleAudio(stream) {
+      var data = [];
+      var context = new AudioContext();
+      var source = context.createMediaStreamSource(stream);
+      var processor = context.createScriptProcessor(1024, 1, 1);
+
+      document.getElementById("start").addEventListener("click", async () => {
+        data = [];
+        source.connect(processor);
+        processor.connect(context.destination);
+        document.getElementById("stop").disabled = false;
+        document.getElementById("start").disabled = true;
+      });
+      document.getElementById("stop").addEventListener("click", () => {
+        processor.disconnect();
+        source.disconnect();
+        var wav = new synth.WAV(1, context.sampleRate, 16, true, data);
+        var blob = wav.toBlob();
+        inputAudio = blob;
+        var src = URL.createObjectURL(blob);
+        document.getElementById("audio").src = src;
+        document.getElementById("stop").disabled = true;
+        document.getElementById("start").disabled = false;
+      });
+
+      processor.onaudioprocess = function (e) {
+        data.push.apply(data, e.inputBuffer.getChannelData(0));
+      };
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(handleAudio);
+    document.getElementById("mainForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append("content", e.target.content.value);
+      formData.append("audio", inputAudio);
+      fetch("/generate", {
+        method: "POST",
+        body: formData,
+      });
+    });
+  </script>
+</html>
