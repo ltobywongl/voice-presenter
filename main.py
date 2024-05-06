@@ -38,7 +38,7 @@ class handler(BaseHTTPRequestHandler):
         form = cgi.FieldStorage(
             fp=self.rfile, headers=self.headers, environ={"REQUEST_METHOD": "POST"}
         )
-        task_id = uuid()
+        task_id = str(uuid())
         content = form.getvalue("content")
         audio = form.getvalue("audio")
         
