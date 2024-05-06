@@ -1,3 +1,4 @@
+from io import BytesIO
 import threading
 import time
 import json
@@ -20,7 +21,8 @@ model.cuda()
 
 # AWS Setup
 queue = StrictRedis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com:6379", port=6379)
-s3 = boto3.client('s3', aws_access_key_id="ASIA4J7IJDVSUBOUNCFD" , aws_secret_access_key="bjhdtTublHKRiJNTyIgTLGoMeQa5LbOjK4KK8RsB")
+session = boto3.Session(region_name="us-east-1")
+s3 = session.client("s3")
 
 def processQueue():
     while True:
@@ -40,7 +42,8 @@ def processQueue():
                 language="en",
             )
             
-            s3.upload_fileobj(outputs['wav'], "ai-presenter", f"results/{task_id}.wav")
+            fileobj = BytesIO(outputs['wav'])
+            s3.upload_fileobj(fileobj, "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
         except:
             print(f"Failed to process.")
             continue

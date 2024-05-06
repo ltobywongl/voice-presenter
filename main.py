@@ -2,13 +2,15 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import cgi
 import json
 from uuid import uuid4 as uuid
+from io import BytesIO
 
 from redis import StrictRedis
 import boto3
 
 # AWS Setup
 queue = StrictRedis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com:6379", port=6379)
-s3 = boto3.client('s3', aws_access_key_id="ASIA4J7IJDVSUBOUNCFD" , aws_secret_access_key="bjhdtTublHKRiJNTyIgTLGoMeQa5LbOjK4KK8RsB")
+session = boto3.Session(region_name="us-east-1")
+s3 = session.client("s3")
 
 def save_blob_as_wav(blob, filename):
     with open(filename, 'wb') as wav_file:
@@ -49,7 +51,8 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(bytes(message, "utf8"))
             return
         
-        s3.upload_fileobj(audio, "ai-presenter", f"tasks/{task_id}.wav")
+        fileobj = BytesIO(audio)
+        s3.upload_fileobj(fileobj, "ai-presenter", f"tasks/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
         
         data = {
             "id": task_id,
@@ -64,7 +67,6 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         message = "success"
         self.wfile.write(bytes(message, "utf8"))
-
 
 PORT = 8080
 with HTTPServer(("", PORT), handler) as server:
