@@ -20,7 +20,7 @@ model.load_checkpoint(config, checkpoint_dir="./XTTS-v2/")
 model.cuda()
 
 # AWS Setup
-queue = StrictRedis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com:6379", port=6379)
+queue = StrictRedis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com", port=6379)
 session = boto3.Session(region_name="us-east-1")
 s3 = session.client("s3")
 
