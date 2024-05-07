@@ -3,16 +3,17 @@ import threading
 import time
 import json
 
+print("Importing XTTS")
+
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
 
-# from IPython.display import Audio
-# from scipy.io.wavfile import write
+print("Imported XTTS")
 
 from redis import Redis
 import boto3
 
-print("Initializing")
+print("Initializing Model")
 
 # AI Setup
 config = XttsConfig()
@@ -21,12 +22,12 @@ model = Xtts.init_from_config(config)
 model.load_checkpoint(config, checkpoint_dir="./XTTS-v2/")
 model.cuda()
 
+print("Initialized")
+
 # AWS Setup
 queue = Redis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com", port=6379, decode_responses=True)
 session = boto3.Session(region_name="us-east-1")
 s3 = session.client("s3")
-
-print("Initialized")
 
 def processQueue():
     while True:
@@ -53,6 +54,7 @@ def processQueue():
             continue
 
 if __name__ == '__main__':
+    print("Starting up...")
     threading.Thread(target=processQueue, daemon=True).start()
     while True:
         time.sleep(10)
