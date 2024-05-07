@@ -9,8 +9,10 @@ from TTS.tts.models.xtts import Xtts
 # from IPython.display import Audio
 # from scipy.io.wavfile import write
 
-from redis import StrictRedis
+from redis import Redis
 import boto3
+
+print("Initializing")
 
 # AI Setup
 config = XttsConfig()
@@ -20,9 +22,11 @@ model.load_checkpoint(config, checkpoint_dir="./XTTS-v2/")
 model.cuda()
 
 # AWS Setup
-queue = StrictRedis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com", port=6379)
+queue = Redis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com", port=6379, decode_responses=True)
 session = boto3.Session(region_name="us-east-1")
 s3 = session.client("s3")
+
+print("Initialized")
 
 def processQueue():
     while True:

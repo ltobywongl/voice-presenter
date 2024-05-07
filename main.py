@@ -56,7 +56,7 @@ class handler(BaseHTTPRequestHandler):
             s3.upload_fileobj(fileobj, "ai-presenter", f"tasks/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
         except Exception as error:
             print(error)
-            self.send_response(200)
+            self.send_response(500)
             self.send_header("Content-type", "text/html")
             self.end_headers()
             message = "File Storage Error"
