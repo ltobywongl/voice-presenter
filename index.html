@@ -38,11 +38,19 @@
         resize: vertical;
         width: 100%;
       }
+      input[type="button"] {
+        padding: 1rem 2rem;
+        border-radius: 0.5rem;
+        font-weight: bold;
+      }
+      input[type="text"] {
+        padding: 0.5rem 0.25rem
+      }
       button {
         color: white;
         background-color: limegreen;
         border: none;
-        padding: 0.5rem;
+        padding: 1rem;
         border-radius: 0.5rem;
         font-weight: bold;
       }
@@ -63,13 +71,13 @@
         Cannot record audio because this http site is treated as unsafe:
         <a href="https://medium.com/@Carmichaelize/enabling-the-microphone-camera-in-chrome-for-local-unsecure-origins-9c90c3149339">Follow this</a>
       </div>
-      <div>
+      <div style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem;">
         <div>Record your voice:</div>
         <input type="button" id="start" value="Start" />
         <input type="button" id="stop" value="Stop" disabled />
       </div>
-      <div>
-        <div>Your Record:</div>
+      <div style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem;">
+        <div>Recorded:</div>
         <audio id="audio" controls></audio>
       </div>
       <div>
@@ -80,7 +88,7 @@
     </form>
     <div id="history">
       <div>
-        Your Task IDs:
+        Your Previous TaskIDs:
         <ol id="history-list"></ol>
       </div>
       <div>
