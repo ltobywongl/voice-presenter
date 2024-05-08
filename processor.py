@@ -32,12 +32,17 @@ def processQueue():
     while True:
         try:
             _, task_json = queue.blpop("tasks")
+            print(f"Processing Task: {task_json}")
             task = json.loads(task_json)
             task_id = task["id"]
             text_to_speak = task["text"]
             s3.download_file("ai-presenter", f"tasks/{task_id}.wav", f"tasks/{task_id}.wav")
             reference_audios = [f"./tasks/{task_id}.wav"]
-            
+        except Exception as e:
+            print(f"Failed to retrieve data: {e}")
+            continue
+
+        try:
             outputs = model.synthesize(
                 text_to_speak,
                 config,
@@ -45,11 +50,15 @@ def processQueue():
                 gpt_cond_len=3,
                 language="en",
             )
+        except Exception as e:
+            print(f"Failed to process: {e}")
+            continue
             
+        try:
             fileobj = BytesIO(outputs['wav'])
             s3.upload_fileobj(fileobj, "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
-        except:
-            print(f"Failed to process.")
+        except Exception as e:
+            print(f"Failed to upload result: {e}")
             continue
 
 if __name__ == '__main__':
