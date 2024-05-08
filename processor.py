@@ -30,12 +30,6 @@ queue = Redis(host="default-redis-0001-001.7zh2ph.0001.use1.cache.amazonaws.com"
 session = boto3.Session(region_name="us-east-1")
 s3 = session.client("s3")
 
-def remove_file(filename):
-    try:
-        os.remove(filename)
-    except Exception as e:
-        print(f"Failed to remove file: {e}")
-
 def processQueue():
     while True:
         try:
@@ -43,10 +37,11 @@ def processQueue():
             task = json.loads(task_json)
             task_id = task["id"]
             text_to_speak = task["text"]
-            print(f"Processing Task: id={task_id}, text={text_to_speak}, time={datetime.datetime.now(datetime.UTC).isoformat()}")
+            if not task_id or not text_to_speak:
+                raise Exception("Missing task_id or text_to_speak")
+            print(f"Processing Task: id={task_id}, time={datetime.datetime.now(datetime.UTC).isoformat()}")
         except Exception as e:
             print(f"Failed to retrieve data: {e}")
-            remove_file(temp_filename)
             continue
         
         try:
@@ -66,14 +61,10 @@ def processQueue():
                 with tempfile.NamedTemporaryFile(suffix=".wav") as temp_upload_file:
                     temp_upload_file.write(outputs["wav"])
                     s3.upload_fileobj(temp_upload_file, "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
-                    remove_file(temp_upload_file.name)
-                
-                print(f"Successfully processed result, time={datetime.datetime.now(datetime.UTC).isoformat()}")
-                remove_file(temp_filename)
         except Exception as e:
             print(f"Failed to retrieve file: {e}")
-            remove_file(temp_filename)
             continue
+        print(f"Successfully processed result, time={datetime.datetime.now(datetime.UTC).isoformat()}")
 
 if __name__ == '__main__':
     print("Starting up...")
