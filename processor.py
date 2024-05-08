@@ -24,7 +24,7 @@ model.load_checkpoint(config, checkpoint_dir="./XTTS-v2/")
 print("Initialized")
 
 # AWS Setup
-queue = Redis(host="ai-presenter-7zh2ph.serverless.use1.cache.amazonaws.com", port=6379, decode_responses=True)
+queue = Redis(host="default-redis-0001-001.7zh2ph.0001.use1.cache.amazonaws.com", port=6379, decode_responses=True)
 session = boto3.Session(region_name="us-east-1")
 s3 = session.client("s3")
 
