@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Voice Presenter</title>
     <style type="text/css">
-      body, html {
+      body,
+      html {
         height: 100%;
         margin: 0px;
       }
@@ -27,7 +28,8 @@
         width: 100%;
       }
       button {
-        background-color: chartreuse;
+        color: white;
+        background-color: limegreen;
         border: none;
         padding: 0.5rem;
         border-radius: 0.5rem;
@@ -35,6 +37,10 @@
       }
       button:hover {
         background-color: green;
+      }
+      button:disabled {
+        color: gainsboro;
+        background-color: darkgreen;
       }
     </style>
   </head>
@@ -55,7 +61,7 @@
         <div>Present Content</div>
         <textarea id="textarea" name="content" rows="10"></textarea>
       </div>
-      <button type="submit">Generate</button>
+      <button id="submit-btn" type="submit">Generate</button>
     </form>
   </body>
   <script src="https://unpkg.com/synth-js/dst/synth.min.js"></script>
@@ -96,9 +102,20 @@
       const formData = new FormData();
       formData.append("content", e.target.content.value);
       formData.append("audio", inputAudio);
+      e.target.content.value = "";
+      document.getElementById("audio").src = "";
+      document.getElementById("submit-btn").disabled = true;
+      inputAudio = undefined;
+
       fetch("/generate", {
         method: "POST",
         body: formData,
+      }).then(async (response) => {
+        if (response.status !== 200) {
+          const res = await response.text();
+          console.log("Error: " + res);
+        }
+        document.getElementById("submit-btn").disabled = false;
       });
     });
   </script>
