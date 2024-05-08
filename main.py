@@ -39,14 +39,15 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write(bytes(message, "utf8"))
                 return
 
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
-            message = s3.generate_presigned_url(
+            url = s3.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": "ai-presenter", "Key": f"results/{id}.wav"},
             )
-            self.wfile.write(bytes(message, "utf8"))
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            message = {"success": True, "url": url}
+            self.wfile.write(bytes(json.dumps(message), "utf8"))
         else:
             try:
                 with open("index.html", "rb") as index_file:
