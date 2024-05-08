@@ -1,4 +1,6 @@
+import datetime
 import os
+import tempfile
 import threading
 import time
 import json
@@ -41,35 +43,37 @@ def processQueue():
             task = json.loads(task_json)
             task_id = task["id"]
             text_to_speak = task["text"]
-            print(f"Processing Task: id={task_id}, text={text_to_speak}")
-            s3.download_file("ai-presenter", f"tasks/{task_id}.wav", f"/tmp/{task_id}.wav")
-            reference_audios = [f"/tmp/{task_id}.wav"]
+            print(f"Processing Task: id={task_id}, text={text_to_speak}, time={datetime.datetime.now(datetime.UTC).isoformat()}")
         except Exception as e:
             print(f"Failed to retrieve data: {e}")
-            remove_file(f"/tmp/{task_id}.wav")
-            continue
-
-        try:
-            outputs = model.synthesize(
-                text_to_speak,
-                config,
-                speaker_wav=reference_audios,
-                gpt_cond_len=3,
-                language="en",
-            )
-        except Exception as e:
-            print(f"Failed to process: {e}")
-            remove_file(f"/tmp/{task_id}.wav")
-            continue
-            
-        try:
-            s3.upload_fileobj(outputs['wav'], "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
-        except Exception as e:
-            print(f"Failed to upload result: {e}")
-            remove_file(f"/tmp/{task_id}.wav")
+            remove_file(temp_filename)
             continue
         
-        remove_file(f"/tmp/{task_id}.wav")
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".wav") as temp_file:
+                temp_filename = temp_file.name
+                s3.download_file("ai-presenter", f"tasks/{task_id}.wav", temp_filename)
+                reference_audios = [temp_filename]
+                
+                outputs = model.synthesize(
+                    text_to_speak,
+                    config,
+                    speaker_wav=reference_audios,
+                    gpt_cond_len=3,
+                    language="en",
+                )
+                
+                with tempfile.NamedTemporaryFile(suffix=".wav") as temp_upload_file:
+                    temp_upload_file.write(outputs["wav"])
+                    s3.upload_fileobj(temp_upload_file, "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
+                    remove_file(temp_upload_file.name)
+                
+                print(f"Successfully processed result, time={datetime.datetime.now(datetime.UTC).isoformat()}")
+                remove_file(temp_filename)
+        except Exception as e:
+            print(f"Failed to retrieve file: {e}")
+            remove_file(temp_filename)
+            continue
 
 if __name__ == '__main__':
     print("Starting up...")
