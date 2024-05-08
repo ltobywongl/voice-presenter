@@ -8,7 +8,7 @@ config = XttsConfig()
 config.load_json("./XTTS-v2/config.json")
 model = Xtts.init_from_config(config)
 model.load_checkpoint(config, checkpoint_dir="./XTTS-v2/")
-model.cuda()
+model.cuda() # Use GPU, comment out if no GPU is available
 
 text_to_speak = "Present with AI now! Start, Stop and record"
 reference_audios = ["./input.wav"]

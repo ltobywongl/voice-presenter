@@ -1,9 +1,9 @@
 import datetime
-import os
 import tempfile
 import threading
 import time
 import json
+from scipy.io.wavfile import write
 
 print("Importing XTTS")
 
@@ -55,7 +55,7 @@ def processQueue():
                 )
                 
                 with tempfile.NamedTemporaryFile(suffix=".wav") as temp_upload_file:
-                    temp_upload_file.write(outputs["wav"])
+                    write(temp_upload_file.name, 24000, outputs["wav"])
                     s3.upload_fileobj(temp_upload_file, "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
             print(f"Successfully processed result, time={datetime.datetime.now(datetime.UTC).isoformat()}")
         except Exception as e:
