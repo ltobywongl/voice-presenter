@@ -32,12 +32,12 @@ def processQueue():
     while True:
         try:
             _, task_json = queue.blpop("tasks")
-            print(f"Processing Task: {task_json}")
             task = json.loads(task_json)
             task_id = task["id"]
             text_to_speak = task["text"]
-            s3.download_file("ai-presenter", f"tasks/{task_id}.wav", f"tasks/{task_id}.wav")
-            reference_audios = [f"./tasks/{task_id}.wav"]
+            print(f"Processing Task: id={task_id}, text={text_to_speak}")
+            s3.download_file("ai-presenter", f"tasks/{task_id}.wav", f"/tasks/{task_id}.wav")
+            reference_audios = [f"/tasks/{task_id}.wav"]
         except Exception as e:
             print(f"Failed to retrieve data: {e}")
             continue
