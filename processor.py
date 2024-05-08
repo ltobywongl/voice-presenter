@@ -20,7 +20,6 @@ config = XttsConfig()
 config.load_json("./XTTS-v2/config.json")
 model = Xtts.init_from_config(config)
 model.load_checkpoint(config, checkpoint_dir="./XTTS-v2/")
-model.cuda()
 
 print("Initialized")
 
