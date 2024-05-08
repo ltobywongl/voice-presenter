@@ -36,8 +36,8 @@ def processQueue():
             task_id = task["id"]
             text_to_speak = task["text"]
             print(f"Processing Task: id={task_id}, text={text_to_speak}")
-            s3.download_file("ai-presenter", f"tasks/{task_id}.wav", f"./tmp/{task_id}.wav")
-            reference_audios = [f"./tmp/{task_id}.wav"]
+            s3.download_file("ai-presenter", f"tasks/{task_id}.wav", f"/tmp/{task_id}.wav")
+            reference_audios = [f"/tmp/{task_id}.wav"]
         except Exception as e:
             print(f"Failed to retrieve data: {e}")
             continue
