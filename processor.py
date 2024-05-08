@@ -40,11 +40,7 @@ def processQueue():
             if not task_id or not text_to_speak:
                 raise Exception("Missing task_id or text_to_speak")
             print(f"Processing Task: id={task_id}, time={datetime.datetime.now(datetime.UTC).isoformat()}")
-        except Exception as e:
-            print(f"Failed to retrieve data: {e}")
-            continue
-        
-        try:
+            
             with tempfile.NamedTemporaryFile(suffix=".wav") as temp_file:
                 temp_filename = temp_file.name
                 s3.download_file("ai-presenter", f"tasks/{task_id}.wav", temp_filename)
@@ -61,10 +57,10 @@ def processQueue():
                 with tempfile.NamedTemporaryFile(suffix=".wav") as temp_upload_file:
                     temp_upload_file.write(outputs["wav"])
                     s3.upload_fileobj(temp_upload_file, "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
+            print(f"Successfully processed result, time={datetime.datetime.now(datetime.UTC).isoformat()}")
         except Exception as e:
-            print(f"Failed to retrieve file: {e}")
+            print(f"Failed to process task: {e}")
             continue
-        print(f"Successfully processed result, time={datetime.datetime.now(datetime.UTC).isoformat()}")
 
 if __name__ == '__main__':
     print("Starting up...")
