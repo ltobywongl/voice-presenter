@@ -16,12 +16,23 @@
         align-items: center;
         justify-content: center;
       }
-      form {
+      form,
+      #history {
         width: 80%;
         padding: 1rem;
         border: 1px solid gray;
         display: flex;
         flex-direction: column;
+        gap: 0.5rem;
+        border-radius: 0.5rem;
+      }
+      #history {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+      }
+      #history > div {
+        width: 45%;
       }
       textarea {
         resize: vertical;
@@ -47,7 +58,11 @@
   <body>
     <form id="mainForm">
       <h1>AI Present With Your Voice</h1>
-      <strong>!!All outputs are publicly available!!</strong>
+      <strong>!!All outputs are publicly available and will be deleted in 1 day!!</strong>
+      <div>
+        Cannot record audio because this http site is treated as unsafe:
+        <a href="https://medium.com/@Carmichaelize/enabling-the-microphone-camera-in-chrome-for-local-unsecure-origins-9c90c3149339">Follow this</a>
+      </div>
       <div>
         <div>Record your voice:</div>
         <input type="button" id="start" value="Start" />
@@ -63,6 +78,19 @@
       </div>
       <button id="submit-btn" type="submit">Generate</button>
     </form>
+    <div id="history">
+      <div>
+        Your Task IDs:
+        <ol id="history-list"></ol>
+      </div>
+      <div>
+        <form id="history-form">
+          Get result with Task ID:
+          <input type="text" name="id" />
+          <button type="submit">Get</button>
+        </form>
+      </div>
+    </div>
   </body>
   <script src="https://unpkg.com/synth-js/dst/synth.min.js"></script>
   <script>
@@ -97,6 +125,18 @@
       };
     }
     navigator.mediaDevices.getUserMedia({ audio: true }).then(handleAudio);
+    document.getElementById("history-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const response = await fetch(`/history?id=${e.target.id.value}`, {
+        method: "GET",
+      });
+      if (response.status === 200) {
+        const responseObject = await response.json();
+        window.open(responseObject.url, "_blank").focus();
+      } else {
+        alert("Error: No such task or task is still processing")
+      }
+    });
     document.getElementById("mainForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const formData = new FormData();
@@ -111,11 +151,17 @@
         method: "POST",
         body: formData,
       }).then(async (response) => {
+        document.getElementById("submit-btn").disabled = false;
         if (response.status !== 200) {
           const res = await response.text();
-          console.log("Error: " + res);
+          alert("Error: " + res);
+        } else {
+          const res = await response.json();
+          console.log(res);
+          const liElement = document.createElement("li");
+          liElement.innerHTML = res.task_id;
+          document.getElementById("history-list").appendChild(liElement);
         }
-        document.getElementById("submit-btn").disabled = false;
       });
     });
   </script>
