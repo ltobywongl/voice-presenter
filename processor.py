@@ -42,11 +42,11 @@ def processQueue():
             task_id = task["id"]
             text_to_speak = task["text"]
             print(f"Processing Task: id={task_id}, text={text_to_speak}")
-            s3.download_file("ai-presenter", f"tasks/{task_id}.wav", f"tmp/{task_id}.wav")
-            reference_audios = [f"tmp/{task_id}.wav"]
+            s3.download_file("ai-presenter", f"tasks/{task_id}.wav", f"/tmp/{task_id}.wav")
+            reference_audios = [f"/tmp/{task_id}.wav"]
         except Exception as e:
             print(f"Failed to retrieve data: {e}")
-            remove_file(f"tmp/{task_id}.wav")
+            remove_file(f"/tmp/{task_id}.wav")
             continue
 
         try:
@@ -59,17 +59,17 @@ def processQueue():
             )
         except Exception as e:
             print(f"Failed to process: {e}")
-            remove_file(f"tmp/{task_id}.wav")
+            remove_file(f"/tmp/{task_id}.wav")
             continue
             
         try:
             s3.upload_fileobj(outputs['wav'], "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
         except Exception as e:
             print(f"Failed to upload result: {e}")
-            remove_file(f"tmp/{task_id}.wav")
+            remove_file(f"/tmp/{task_id}.wav")
             continue
         
-        remove_file(f"tmp/{task_id}.wav")
+        remove_file(f"/tmp/{task_id}.wav")
 
 if __name__ == '__main__':
     print("Starting up...")
