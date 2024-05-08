@@ -21,6 +21,5 @@ outputs = model.synthesize(
     language="en",
 )
 
-Audio(data=outputs['wav'], rate=24000)
 output_file_path = f'./output.wav'
 write(output_file_path, 24000, outputs['wav'])

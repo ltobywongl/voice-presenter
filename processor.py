@@ -37,7 +37,7 @@ def processQueue():
             text_to_speak = task["text"]
             print(f"Processing Task: id={task_id}, text={text_to_speak}")
             s3.download_file("ai-presenter", f"tasks/{task_id}.wav", f"/tmp/{task_id}.wav")
-            reference_audios = [f"/tmp/{task_id}.wav"]
+            reference_audios = [f"./tmp/{task_id}.wav"]
         except Exception as e:
             print(f"Failed to retrieve data: {e}")
             continue
@@ -55,8 +55,7 @@ def processQueue():
             continue
             
         try:
-            fileobj = BytesIO(outputs['wav'])
-            s3.upload_fileobj(fileobj, "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
+            s3.upload_fileobj(outputs['wav'], "ai-presenter", f"results/{task_id}.wav", ExtraArgs={'ContentType': "audio/wav"})
         except Exception as e:
             print(f"Failed to upload result: {e}")
             continue
